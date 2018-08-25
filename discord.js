@@ -163,7 +163,7 @@ function PostShopMessage() {
         var channelList = subbedChannels.filter(v => v.type == 'image').map(v => v.channel);
         client.channels.forEach(channel => {
             if (channelList.includes(channel.id)) {
-                channel.send("https://johnwick.genj.io/" + fileName).catch(error => {
+                channel.send("https://discordbots.org/bot/480105002925555713" + fileName).catch(error => {
                     LogToFile(error);
                     LogToFile(subbedChannels.length);
                     subbedChannels = subbedChannels.filter(v => v.channel != channel.id);
