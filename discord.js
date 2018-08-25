@@ -1,9 +1,11 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const client = new Discord.Client();
+const config = require('./config.json');
 const Fortnite = require('./fortnite');
+const ftnApi = new Fortnite(process.env.FRTNT);
+const currentSeason = "5";
 const { GetStoreImages, GetChangeImage } = require('./images');
-const { DiscordToken } = require('./tokens');
 
 var subbedChannels = [];
 var logStream = fs.createWriteStream('errors.txt', {flags: 'a'});
@@ -31,28 +33,30 @@ function BroadcastReminderMessage(msg) {
     });
 }
 
-client.on('ready', () => {
-    client.user.setActivity('Type !help', {type: 'PLAYING'});
+client.on("ready", () => {
+  // This event will run if the bot starts, and logs in, successfully.
+  console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`); 
+  // Example of changing the bot's playing game to something useful. `client.user` is what the
+  // docs refer to as the "ClientUser".
+  client.user.setActivity(`+help for ${client.users.size} members in ${client.guilds.size} servers.`);
 });
 
-const HELP_MESSAGE = `\`\`\`
-JohnWick is a bot that posts the contents of the Fortnite shop each day, usually around 00:00 GMT.
+client.on("guildCreate", guild => {
+  // This event triggers when the bot joins a guild.
+  console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`);
+  client.user.setActivity(`+help for ${client.users.size} members in ${client.guilds.size} servers.`);
+});
 
-* Use !subscribe in a channel to receive the shop notificaitons in that channel. The bot will need appropriate permissions. !unsubscribe will remove that channel.
-* !subscribe accepts a second argument, 'text', which will make it so that the notifications are text-only, instead of the shop image.
-
-You can see my source code at https://github.com/SirWaddles/JohnWick, so feel free to lodge an issue if you have any problems or a feature request.
-\`\`\``;
+client.on("guildDelete", guild => {
+  // this event triggers when the bot is removed from a guild.
+  console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
+  client.user.setActivity(`+help for ${client.users.size} members in ${client.guilds.size} servers.`);
+});
 
 client.on('message', msg => {
     if (msg.author.bot) return;
     if (msg.content.substring(0, 1) != '!') return;
-    var parts = msg.content.split(' ');
-    if (parts[0] == '!help') {
-        msg.channel.send(HELP_MESSAGE);
-        return;
-    }
-    if (parts[0] == '!subscribe') {
+    if (parts[0] == '+subscribe') {
         subbedChannels.push({
             channel: msg.channel.id.toString(),
             type: (parts.length > 1 && parts[1] == 'text') ? 'text' : 'image',
@@ -60,16 +64,16 @@ client.on('message', msg => {
         msg.channel.send("Sure thing! I'll tell you when the shop updates.");
         SaveChannelFile();
     }
-    if (parts[0] == '!unsubscribe') {
+    if (parts[0] == '+unsubscribe') {
         subbedChannels = subbedChannels.filter(v => v.channel != msg.channel.id);
         msg.channel.send("Not a problem, I'll stop sending stuff here.");
         SaveChannelFile();
     }
-    if (parts[0] == '!servers' && msg.author.id == '229419335930609664') {
+    if (parts[0] == '+servers' && msg.author.id == '136191833196855296') {
         msg.reply("Currently connected to **" + client.guilds.size + "** servers");
         return;
     }
-    if (parts[0] == '!serverlist' && msg.author.id == '229419335930609664') {
+    if (parts[0] == '+serverlist' && msg.author.id == '136191833196855296') {
         let listFile = client.guilds.sort((a, b) => {
             return (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : -1;
         }).map(v => {
@@ -81,7 +85,7 @@ client.on('message', msg => {
         msg.channel.send(attach);
         return;
     }
-    if (parts[0] == '!shop') {
+    if (parts[0] == '+shop') {
         if (parts.length > 1 && parts[1] == 'text') {
             GetTextMessage().then(message => msg.channel.send(message));
             return;
@@ -91,13 +95,13 @@ client.on('message', msg => {
             msg.channel.send(attach);
         });
     }
-    if (parts[0] == '!changelist') {
+    if (parts[0] == '+changelist') {
         GetChangeImage().then(data => {
             var attach = new Discord.Attachment(data, 'shop.png');
             msg.channel.send(attach);
         });
     }
-    if (parts[0] == '!broadcast' && msg.author.id == '229419335930609664') {
+    if (parts[0] == '+broadcast' && msg.author.id == '136191833196855296') {
         if (parts[1] == 'shop') {
             PostShopMessage();
             return;
@@ -186,4 +190,4 @@ setInterval(function() {
     });
 }, 300000); // 5 minutes - 60 * 5 * 1000
 
-client.login(DiscordToken);
+client.login(process.env.B0T_T0KEN);
