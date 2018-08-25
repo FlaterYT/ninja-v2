@@ -8,6 +8,7 @@
   "dependencies": {
     "canvas": "^2.0.0-alpha.12",
     "discord.js": "^11.3.2",
+    "fortnite": "^4.1.1",
     "fortnite-api": "^2.10.0"
   }
 }
